@@ -42,7 +42,7 @@ int main() {
             total_size += n;
             printf("%ld\n", total_size);
         }
-        FILE *img = fopen("./Gift.jpg", "wb");
+        FILE *img = fopen("../Gift.jpg", "wb");
         fwrite(img_data, total_size, 1, img);
         fclose(img);
         printf("[*] Image Get!\n");

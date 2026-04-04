@@ -61,7 +61,7 @@ int main() {
 
     // 사진 송신
     {
-        FILE *file = fopen("picture.jpg", "rb");
+        FILE *file = fopen("../picture.jpg", "rb");
         if (file == NULL) {
             printf("Error opening file\n");
             return -1;

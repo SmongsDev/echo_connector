@@ -1,2 +1,4 @@
 *.exe
-./idea
+.idea/
+*.jpg
+cmake-build-debug/
