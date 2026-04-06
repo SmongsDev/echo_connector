@@ -5,10 +5,14 @@ set(CMAKE_C_STANDARD 99)
 
 set(CMAKE_SYSTEM_PROCESSOR x86_64)
 
-add_executable(server TCP/server.c)
-add_executable(client TCP/client.c)
+add_executable(t_server TCP/tcp_server.c)
+add_executable(t_client TCP/tcp_client.c)
+add_executable(u_server UDP/udp_server.c)
+add_executable(u_client UDP/client.c)
 
 #configure_file(${CMAKE_SOURCE_DIR}/picture.jpg ${CMAKE_BINARY_DIR}/picture.jpg COPYONLY)
 
-target_link_libraries(server ws2_32)
-target_link_libraries(client ws2_32)
+target_link_libraries(t_server ws2_32)
+target_link_libraries(t_client ws2_32)
+target_link_libraries(u_server ws2_32)
+target_link_libraries(u_client ws2_32)
