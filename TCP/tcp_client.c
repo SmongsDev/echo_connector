@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <winsock2.h>
 
+#define PORT 9090
+
 int main() {
     WSADATA wsaData;
 
@@ -15,43 +17,51 @@ int main() {
     SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
 
     // 서버 주소 설정
-    struct sockaddr_in serverAddr;
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(9090);
-    serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    struct sockaddr_in addr_s;
+    addr_s.sin_family = AF_INET;
+    addr_s.sin_addr.s_addr = inet_addr("127.0.0.1");
+    addr_s.sin_port = htons(PORT);
 
     // 서버 연결
-    connect(sock, (SOCKADDR*)&serverAddr, sizeof(serverAddr));
+    if (connect(sock, (struct sockaddr *)&addr_s, sizeof(addr_s)) == SOCKET_ERROR) {
+        printf("Failed connect\n");
+        return 1;
+    }
     printf("[*] Server connect!\n");
 
-    // 사진 수신
+    // 사진 송신
     {
-        // 크기 수신
-        u_long size = 0;
-        if (recv(sock, (char *)&size, 4, 0) == SOCKET_ERROR){
-            printf("[*] recv failed!\n");
+        FILE *file = fopen("picture.jpg", "rb");
+        if (file == NULL) {
+            printf("Error opening file\n");
             return 1;
         }
 
-        u_long i_size = ntohl(size);
-        char *img_data = (char *)malloc(i_size);
-        int total_size = 0;
-        while(total_size < i_size) {
-            int n = recv(sock, img_data + total_size, i_size - total_size, 0);
-            if (n == SOCKET_ERROR) {
-                printf("[!] recv failed!\n");
-                return 1;
-            }
-            total_size += n;
-            printf("%ld\n", total_size);
-        }
-        FILE *img = fopen("../Gift.jpg", "wb");
-        fwrite(img_data, total_size, 1, img);
-        fclose(img);
-        printf("[*] Image Get!\n");
+        // 파일 크기
+        fseek(file, 0, SEEK_END);
+        const u_long size = ftell(file);
+        fseek(file, 0, SEEK_SET);
 
-        free(img_data);
+        char *buffer = (char *) malloc(size + 1);
+        fread(buffer, size, 1, file);
+        fclose(file);
+
+        // 크기 송신
+        u_long n_size = htonl(size);
+        if (send(sock, (char *)&n_size, 4, 0) == SOCKET_ERROR) {
+            printf("Failed sending image size\n");
+            return 1;
+        }
+
+        if (send(sock, buffer, size, 0) == SOCKET_ERROR) {
+            printf("Failed sending\n");
+            return 1;
+        }
+        printf("Successful sending\n");
+
+        free(buffer);
     }
+
 
     // 소켓 종료
     closesocket(sock);

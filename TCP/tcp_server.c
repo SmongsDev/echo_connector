@@ -62,37 +62,38 @@ int main() {
         printf("Connection accepted\n");
     }
 
-    // 사진 송신
+    // 사진 수신
     {
-        FILE *file = fopen("../picture.jpg", "rb");
-        if (file == NULL) {
-            printf("Error opening file\n");
-            return -1;
-        }
-
-        // 파일 크기
-        fseek(file, 0, SEEK_END);
-        const u_long size = ftell(file);
-        fseek(file, 0, SEEK_SET);
-
-        char *buffer = (char *) malloc(size + 1);
-        fread(buffer, size, 1, file);
-        fclose(file);
-
-        // 크기 송신
-        u_long n_size = htonl(size);
-        if (send(sock, (char *)&n_size, 4, 0) == SOCKET_ERROR) {
-            printf("Failed sending image size\n");
+        // 크기 수신
+        u_long size = 0;
+        if (recv(sock, (char *)&size, 4, 0) == SOCKET_ERROR){
+            printf("[*] recv failed!\n");
             return 1;
         }
 
-        if (send(sock, buffer, size, 0) == SOCKET_ERROR) {
-            printf("Failed sending\n");
+        u_long i_size = ntohl(size);
+        char *img_data = (char *)malloc(i_size);
+        int total_size = 0;
+        while(total_size < i_size) {
+            int n = recv(sock, img_data + total_size, i_size - total_size, 0);
+            if (n == SOCKET_ERROR) {
+                printf("[!] recv failed!\n");
+                return 1;
+            }
+            total_size += n;
+            printf("%ld\n", total_size);
+        }
+        FILE *img = fopen("Gift.jpg", "wb");
+        if (img == NULL) {
+            printf("[!] Failed to open file for writing\n");
+            free(img_data);
             return 1;
         }
-        printf("Successful sending\n");
+        fwrite(img_data, total_size, 1, img);
+        fclose(img);
+        printf("[*] Image Get!\n");
 
-        free(buffer);
+        free(img_data);
     }
 
     // 소켓 종료
