@@ -24,16 +24,15 @@ int main() {
 
     // 서버 연결
     if (connect(sock, (struct sockaddr *)&addr_s, sizeof(addr_s)) == SOCKET_ERROR) {
-        printf("Failed connect\n");
+        printf("Failed to connect\n");
         return 1;
     }
-    printf("[*] Server connect!\n");
 
     // 사진 송신
     {
-        FILE *file = fopen("picture.jpg", "rb");
+        FILE *file = fopen("pic.jpg", "rb");
         if (file == NULL) {
-            printf("Error opening file\n");
+            printf("Failed to open file\n");
             return 1;
         }
 
@@ -49,23 +48,20 @@ int main() {
         // 크기 송신
         u_long n_size = htonl(size);
         if (send(sock, (char *)&n_size, 4, 0) == SOCKET_ERROR) {
-            printf("Failed sending image size\n");
+            printf("Failed to send image size\n");
             return 1;
         }
 
         if (send(sock, buffer, size, 0) == SOCKET_ERROR) {
-            printf("Failed sending\n");
+            printf("Failed to send\n");
             return 1;
         }
-        printf("Successful sending\n");
-
         free(buffer);
+        printf("Image send\n");
     }
-
 
     // 소켓 종료
     closesocket(sock);
     WSACleanup();
-
     return 0;
 }
