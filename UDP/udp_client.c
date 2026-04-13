@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <winsock2.h>
 
-#define PORT 9091
-#define CHUNK 4096
+#define PORT 9992
+#define CHUNK 500
 
 int main() {
     WSADATA wsaData;
@@ -17,7 +17,7 @@ int main() {
 
     SOCKET sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (sock == INVALID_SOCKET) {
-        printf("Failed creating socket\n");
+        printf("Failed to create socket\n");
         return 1;
     }
 
@@ -30,7 +30,7 @@ int main() {
     {
         FILE *file = fopen("pic.jpg", "rb");
         if (file == NULL) {
-            printf("Failed opening file\n");
+            printf("Failed to open file\n");
             return 1;
         }
 
@@ -45,7 +45,7 @@ int main() {
         // 크기 송신
         u_long n_size = htonl(size);
         if (sendto(sock, (char *)&n_size, sizeof(n_size), 0, (struct sockaddr *)&addr_s, sizeof(addr_s)) == SOCKET_ERROR) {
-            printf("Failed sending size\n");
+            printf("Failed to send size\n");
             return 1;
         }
 
@@ -54,13 +54,15 @@ int main() {
         while (offset < size) {
             int send_size = (size - offset) < CHUNK ? (size - offset) : CHUNK;
             if (sendto(sock, buffer + offset, send_size, 0, (struct sockaddr *)&addr_s, sizeof(addr_s)) == SOCKET_ERROR) {
-                printf("Failed sending img: %d\n", chunk_idx);
+                printf("Failed to send img: %d\n", chunk_idx);
                 return 1;
             }
             offset += send_size;
             chunk_idx++;
+            Sleep(1000);
         }
         free(buffer);
+        printf("Image send\n");
     }
 
     // 소켓 종료

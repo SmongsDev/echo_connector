@@ -5,7 +5,8 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
-#define PORT 9090
+#define PORT 9991
+#define CHUNK 500
 
 int main() {
     WSADATA wsaData; // WSA(Windows Socket API)
@@ -19,7 +20,7 @@ int main() {
     // 소켓 생성
     SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); // IPv4, TCP 형식, TCP 프로토콜
     if (sock == INVALID_SOCKET) {
-        printf("Failed creating socket\n");
+        printf("Failed to create socket\n");
         return 1;
     }
 
@@ -32,7 +33,7 @@ int main() {
     // 소켓 연결
     {
         if (bind(sock, (struct sockaddr *)&addr_s, sizeof(addr_s)) == SOCKET_ERROR) {
-            printf("Failed binding\n");
+            printf("Failed to bind\n");
             return 1;
         }
     }
@@ -40,7 +41,7 @@ int main() {
     // 연결 대기
     {
         if (listen(sock, 5) == SOCKET_ERROR) { // backlog: 보류 중인 연결 큐의 최대 길이
-            printf("Failed listening\n");
+            printf("Failed to listen\n");
             return 1;
         }
     }
@@ -51,7 +52,7 @@ int main() {
 
     SOCKET acc_sock = accept(sock, (struct sockaddr *) &addr_c, &len);
     if ((acc_sock == INVALID_SOCKET)) {
-        printf("Failed accepting connection\n");
+        printf("Failed to accept connection\n");
         return 1;
     }
 
@@ -68,7 +69,8 @@ int main() {
         char *img_data = (char *)malloc(i_size);
         int total_size = 0;
         while(total_size < i_size) {
-            int n = recv(acc_sock, img_data + total_size, i_size - total_size, 0);
+            int n = recv(acc_sock, img_data + total_size, CHUNK, 0);
+            printf("Bytes: %d\n", n);
             if (n == SOCKET_ERROR) {
                 printf("Failed recv\n");
                 return 1;
@@ -76,9 +78,11 @@ int main() {
             total_size += n;
             printf("%ld\n", total_size);
         }
-        FILE *img = fopen("Gift.jpg", "wb");
+
+        // 사진 저장
+        FILE *img = fopen("Gift_tcp.jpg", "wb");
         if (img == NULL) {
-            printf("Failed opening file\n");
+            printf("Failed to open file\n");
             free(img_data);
             return 1;
         }

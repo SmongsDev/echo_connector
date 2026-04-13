@@ -5,7 +5,8 @@
 #include <stdio.h>
 #include <winsock2.h>
 
-#define PORT 9090
+#define PORT 9991
+#define CHUNK 500
 
 int main() {
     WSADATA wsaData;
@@ -20,10 +21,11 @@ int main() {
     struct sockaddr_in addr_s;
     addr_s.sin_family = AF_INET;
     addr_s.sin_addr.s_addr = inet_addr("127.0.0.1");
+    // addr_s.sin_addr.s_addr = inet_addr("192.168.45.128");
     addr_s.sin_port = htons(PORT);
 
     // 서버 연결
-    if (connect(sock, (struct sockaddr *)&addr_s, sizeof(addr_s)) == SOCKET_ERROR) {
+    if (connect(sock, (struct sockaddr *)&addr_s,   sizeof(addr_s)) == SOCKET_ERROR) {
         printf("Failed to connect\n");
         return 1;
     }
@@ -52,9 +54,17 @@ int main() {
             return 1;
         }
 
-        if (send(sock, buffer, size, 0) == SOCKET_ERROR) {
-            printf("Failed to send\n");
-            return 1;
+        // 데이터 송신
+        u_long offset = 0;
+        while(offset < size) {
+            int send_size = (size - offset) < CHUNK ? (size - offset) : CHUNK;
+            printf("Sending %d bytes\n", send_size);
+            if (send(sock, buffer + offset, send_size, 0) == SOCKET_ERROR) {
+                printf("Failed to send img\n");
+                return 1;
+            }
+            Sleep(100);
+            offset += send_size;
         }
         free(buffer);
         printf("Image send\n");
