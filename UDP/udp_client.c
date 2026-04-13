@@ -29,7 +29,7 @@ int main() {
 
     struct sockaddr_in addr_s;
     addr_s.sin_family = AF_INET;
-    addr_s.sin_addr.s_addr = inet_addr("127.0.0.1");
+    addr_s.sin_addr.s_addr = inet_addr("192.168.45.128");
     addr_s.sin_port = htons(PORT);
 
     // 사진 송신
