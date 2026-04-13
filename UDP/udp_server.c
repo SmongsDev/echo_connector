@@ -7,6 +7,12 @@
 #define PORT 9992
 #define CHUNK 500
 
+struct Udp_packet {
+    int idx;
+    int data_len;
+    char data[CHUNK];
+};
+
 int main() {
     WSADATA wsaData;
 
@@ -42,19 +48,21 @@ int main() {
         u_long size = 0;
         if (recvfrom(sock, (char *)&size, sizeof(size), 0, (struct sockaddr *)&addr_c, &addr_c_len) == SOCKET_ERROR){
             printf("Failed recvfrom\n");
-            return 1;
         }
 
         u_long i_size = ntohl(size);
         char *img_data = (char *)malloc(i_size);
         int total_size = 0;
         while (total_size < i_size) {
-            int n = recvfrom(sock, img_data + total_size, CHUNK, 0, (struct sockaddr *)&addr_c, &addr_c_len);
+            struct Udp_packet up;
+            int n = recvfrom(sock, (char *)&up, sizeof(up), 0, (struct sockaddr *)&addr_c, &addr_c_len);
             if (n == SOCKET_ERROR) {
                 printf("Failed recvfrom\n");
-                return 1;
             }
+
+            int idx = up.idx;
             total_size += n;
+            printf("idx: %d\n", idx);
         }
 
         // 사진 저장

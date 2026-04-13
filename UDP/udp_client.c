@@ -8,6 +8,12 @@
 #define PORT 9992
 #define CHUNK 500
 
+struct Udp_packet {
+    int idx;
+    int data_len;
+    char data[CHUNK];
+};
+
 int main() {
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
@@ -52,12 +58,15 @@ int main() {
         u_long offset = 0;
         int chunk_idx = 0;
         while (offset < size) {
-            int send_size = (size - offset) < CHUNK ? (size - offset) : CHUNK;
-            if (sendto(sock, buffer + offset, send_size, 0, (struct sockaddr *)&addr_s, sizeof(addr_s)) == SOCKET_ERROR) {
+            struct Udp_packet up;
+            up.idx = chunk_idx;
+            up.data_len = (size - offset) < CHUNK ? (size - offset) : CHUNK;
+            memcpy(up.data, buffer + offset, up.data_len);
+            if (sendto(sock, (char *)&up, sizeof(up), 0, (struct sockaddr *)&addr_s, sizeof(addr_s)) == SOCKET_ERROR) {
                 printf("Failed to send img: %d\n", chunk_idx);
                 return 1;
             }
-            offset += send_size;
+            offset += up.data_len;
             chunk_idx++;
             Sleep(1000);
         }
