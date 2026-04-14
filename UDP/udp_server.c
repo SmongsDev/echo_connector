@@ -26,6 +26,8 @@ int main() {
         printf("Failed to create socket\n");
         return 1;
     }
+    int timeout = 10000; // default 값은 0 <- 무한 대기
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
 
     struct sockaddr_in addr_s;
     addr_s.sin_family = AF_INET;
@@ -47,22 +49,26 @@ int main() {
         // 크기 수신
         u_long size = 0;
         if (recvfrom(sock, (char *)&size, sizeof(size), 0, (struct sockaddr *)&addr_c, &addr_c_len) == SOCKET_ERROR){
-            printf("Failed recvfrom\n");
+            printf("Failed recvfrom size\n");
         }
 
         u_long i_size = ntohl(size);
         char *img_data = (char *)malloc(i_size);
+        memset(img_data, 0xFF, i_size);
         int total_size = 0;
         while (total_size < i_size) {
             struct Udp_packet up;
             int n = recvfrom(sock, (char *)&up, sizeof(up), 0, (struct sockaddr *)&addr_c, &addr_c_len);
             if (n == SOCKET_ERROR) {
+                if (WSAGetLastError() == WSAETIMEDOUT) {
+                    break;
+                }
                 printf("Failed recvfrom\n");
             }
 
-            int idx = up.idx;
-            total_size += n;
-            printf("idx: %d\n", idx);
+            memcpy(img_data + up.idx * CHUNK, up.data, up.data_len);
+            total_size += up.data_len;
+            printf("idx: %d\n", up.idx);
         }
 
         // 사진 저장
@@ -72,7 +78,7 @@ int main() {
             free(img_data);
             return 1;
         }
-        fwrite(img_data, total_size, 1, img);
+        fwrite(img_data, i_size, 1, img);
         fclose(img);
         printf("Image Get\n");
 
